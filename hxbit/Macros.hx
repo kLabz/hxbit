@@ -894,7 +894,7 @@ class Macros {
 
 	public static function buildSerializable(isStruct=false) {
 		var cl = Context.getLocalClass().get();
-		if( cl.isInterface || Context.defined("display") || cl.meta.has(":skipSerialize") )
+		if( cl.isInterface || cl.meta.has(":skipSerialize") )
 			return null;
 		var fields = Context.getBuildFields();
 		var toSerialize = [];
@@ -1641,7 +1641,7 @@ class Macros {
 
 	public static function buildNetworkSerializable(?fields: Array<Field>) {
 		var cl = Context.getLocalClass().get();
-		if( cl.isInterface || Context.defined("display") )
+		if( cl.isInterface )
 			return null;
 
 		var clName = Context.getLocalClass().toString();
@@ -2593,7 +2593,7 @@ class Macros {
 	}
 
 
-	static function buildProxyType( p : PropType ) : ComplexType {
+	static function buildProxyType( proxyT : Type, p : PropType ) : ComplexType {
 		if( !needProxy(p) )
 			return p.t;
 		switch( p.d ) {
@@ -2711,15 +2711,15 @@ class Macros {
 					]),
 					fields : tfields,
 				};
-				Context.defineType(t);
+				Context.defineType(t, proxyT.toBaseType().module);
 				return TPath({ pack : ["hxbit"], name : name });
 			}
 		case PFlags(e):
 			return TPath( { pack : ["hxbit"], name : "EnumFlagsProxy", params : [TPType(e.t)] } );
 		case PAlias(t):
-			return buildProxyType(t);
+			return buildProxyType(proxyT, t);
 		case PNull(t):
-			return TPath({ pack : [], name : "Null", params : [TPType(buildProxyType(t))] });
+			return TPath({ pack : [], name : "Null", params : [TPType(buildProxyType(proxyT, t))] });
 		default:
 		}
 		return null;
@@ -2810,7 +2810,7 @@ class Macros {
 			var conds = new haxe.EnumFlags();
 			var p = getPropType(pt, conds);
 			if( p != null ) {
-				var t = buildProxyType(p);
+				var t = buildProxyType(t, p);
 				if( t != null ) return toType(t);
 			}
 			throw "TODO "+pt+" ("+p+")";
